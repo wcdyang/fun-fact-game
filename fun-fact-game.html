@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fun Fact Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f3ee; --surface: #ffffff; --surface2: #f0ede6;
+    --border: #e2ddd5; --border2: #ccc8bf;
+    --text: #1a1814; --text2: #6b6760; --text3: #a09d98;
+    --accent: #1a1814;
+    --green-bg: #e6f4ea; --green-text: #1e6b38;
+    --red-bg: #fdecea; --red-text: #b91c1c;
+    --blue-bg: #e8f0fe; --blue-text: #1a56a8;
+    --radius: 14px; --radius-sm: 8px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem 4rem; }
+  .container { width: 100%; max-width: 560px; }
+  .app-header { text-align: center; margin-bottom: 2.5rem; }
+  .app-header h1 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+  .app-header p { font-size: 14px; color: var(--text2); margin-top: 6px; }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadein 0.2s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 1rem; }
+  .field { margin-bottom: 1.1rem; }
+  label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  input[type=text], input[type=password], textarea { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 15px; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; transition: border-color 0.15s; resize: vertical; }
+  textarea { min-height: 80px; }
+  input:focus, textarea:focus { outline: none; border-color: var(--border2); background: var(--surface); }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: var(--radius-sm); padding: 10px 20px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); transition: background 0.15s, transform 0.1s; }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); }
+  .btn-full { width: 100%; }
+  .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.75rem; }
+  .chip { font-size: 12px; padding: 4px 12px; border-radius: 20px; background: var(--green-bg); color: var(--green-text); font-weight: 500; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+  .student-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 18px; margin-bottom: 0.6rem; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; color: var(--text); transition: background 0.15s, transform 0.1s; }
+  .student-btn:hover { background: var(--surface2); transform: translateY(-1px); }
+  .student-btn:active { transform: scale(0.99); }
+  .student-btn.played { opacity: 0.35; cursor: default; transform: none; }
+  .student-btn.played:hover { background: var(--surface); transform: none; }
+  .fact-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; }
+  .fact-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .fact-text { font-size: 16px; line-height: 1.65; }
+  .reveal-row { display: none; align-items: center; gap: 8px; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); font-size: 13px; color: var(--text2); }
+  .reveal-row.show { display: flex; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .badge-real { background: var(--green-bg); color: var(--green-text); }
+  .badge-fake { background: var(--red-bg); color: var(--red-text); }
+  .loading-wrap { display: none; text-align: center; padding: 1.5rem 0; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--text2); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-wrap span { font-size: 14px; color: var(--text2); }
+  .error-msg { font-size: 13px; color: var(--red-text); margin-top: 8px; display: none; background: var(--red-bg); padding: 10px 14px; border-radius: var(--radius-sm); line-height: 1.5; }
+  .info-msg { font-size: 13px; color: var(--blue-text); margin-top: 8px; background: var(--blue-bg); padding: 10px 14px; border-radius: var(--radius-sm); line-height: 1.5; }
+  .reveal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; }
+  .reveal-header h2 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .reveal-header p { font-size: 14px; color: var(--text2); margin-top: 2px; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .done-icon { font-size: 48px; text-align: center; margin-bottom: 1rem; }
+  .done-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+  .done-sub { font-size: 14px; color: var(--text2); text-align: center; margin-bottom: 1.5rem; }
+  .ghost-btn { background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text2); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+  .ghost-btn:hover { color: var(--text); }
+  .api-note { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+  .tab-row { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+  .tab-btn { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .import-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-top: 0.75rem; }
+  .import-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .import-row:last-child { border-bottom: none; }
+  .import-name { font-weight: 500; min-width: 80px; color: var(--text); }
+  .import-fact { color: var(--text2); line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="app-header">
+    <h1>Fun Fact Game</h1>
+    <p>Two fakes, one real — can they tell the difference?</p>
+  </div>
+
+  <!-- SETUP: API KEYS -->
+  <div id="screen-setup" class="screen active">
+    <div class="card">
+      <p class="section-label">One-time setup</p>
+      <div class="field">
+        <label for="inp-anthropic-key">Anthropic API key</label>
+        <input type="password" id="inp-anthropic-key" placeholder="sk-ant-api03-..." autocomplete="off" />
+        <p class="api-note">Used to generate the fake fun facts. Never stored or sent anywhere else.</p>
+      </div>
+      <div class="field">
+        <label for="inp-sheets-key">Google Sheets API key</label>
+        <input type="password" id="inp-sheets-key" placeholder="AIza..." autocomplete="off" />
+        <p class="api-note">Used to load responses from your Google Form spreadsheet. Never stored or sent anywhere else.</p>
+      </div>
+      <p id="key-error" class="error-msg">Please enter both API keys.</p>
+      <button class="btn btn-primary btn-full" onclick="saveKeys()">Continue</button>
+    </div>
+    <p style="font-size:12px; color:var(--text3); text-align:center; margin-top:0.5rem;">
+      Anthropic key: <a href="https://console.anthropic.com" target="_blank" style="color:var(--text2);">console.anthropic.com</a> &nbsp;·&nbsp;
+      Google key: <a href="https://console.cloud.google.com" target="_blank" style="color:var(--text2);">console.cloud.google.com</a>
+    </p>
+  </div>
+
+  <!-- COLLECT -->
+  <div id="screen-collect" class="screen">
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('manual')">Manual entry</button>
+      <button class="tab-btn" onclick="switchTab('sheets')">Load from Google Sheet</button>
+    </div>
+
+    <!-- MANUAL TAB -->
+    <div id="tab-manual" class="tab-pane active">
+      <div class="card">
+        <p class="section-label">Submit a fun fact</p>
+        <div class="field">
+          <label for="inp-name">Your name</label>
+          <input type="text" id="inp-name" placeholder="e.g. Jordan" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="inp-fact">Your real fun fact</label>
+          <textarea id="inp-fact" placeholder="e.g. I once won a chili cook-off / 我曾經在才藝表演中表演魔術"></textarea>
+        </div>
+        <p id="inp-error" class="error-msg">Please fill in both fields.</p>
+        <button class="btn btn-primary btn-full" onclick="addStudent()">Add my fact</button>
+      </div>
+    </div>
+
+    <!-- SHEETS TAB -->
+    <div id="tab-sheets" class="tab-pane">
+      <div class="card">
+        <p class="section-label">Import from Google Sheet</p>
+        <div class="field">
+          <label for="inp-sheet-id">Google Sheet ID</label>
+          <input type="text" id="inp-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" autocomplete="off" />
+          <p class="api-note">The long ID from your Sheet URL: docs.google.com/spreadsheets/d/<strong>SHEET_ID</strong>/edit</p>
+        </div>
+        <div class="field">
+          <label for="inp-name-col">Name column letter</label>
+          <input type="text" id="inp-name-col" placeholder="B" value="B" autocomplete="off" style="width:80px;" />
+        </div>
+        <div class="field">
+          <label for="inp-fact-col">Fun fact column letter</label>
+          <input type="text" id="inp-fact-col" placeholder="C" value="C" autocomplete="off" style="width:80px;" />
+        </div>
+        <p class="api-note" style="margin-bottom:0.75rem;">Column A is usually the timestamp from Google Forms. Names are typically column B, fun facts column C — adjust if your form is different.</p>
+        <p id="sheets-error" class="error-msg">Could not load sheet. Check the Sheet ID and make sure the sheet is shared as "Anyone with the link can view."</p>
+        <div class="loading-wrap" id="sheets-loading">
+          <span class="spinner"></span><span>Loading responses...</span>
+        </div>
+        <div id="sheets-preview" style="display:none;"></div>
+        <button class="btn btn-primary btn-full" onclick="loadSheet()" style="margin-top:0.75rem;">Load responses</button>
+      </div>
+    </div>
+
+    <!-- SUBMITTED LIST -->
+    <div id="student-list-area" style="display:none;">
+      <p style="font-size:13px; color:var(--text2); margin-bottom:6px;">Students loaded:</p>
+      <div id="chips" class="chips"></div>
+      <div class="divider"></div>
+      <button class="btn btn-primary btn-full" id="start-btn" onclick="goToGame()" disabled>Need at least 2 students</button>
+    </div>
+  </div>
+
+  <!-- GAME: pick student -->
+  <div id="screen-game" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <p style="font-size:22px; font-weight:500; font-family:'Syne',sans-serif; margin-bottom:4px;">Pick a student</p>
+    <p style="font-size:14px; color:var(--text2); margin-bottom:1.25rem;">Host selects whose facts to reveal next.</p>
+    <div id="student-buttons"></div>
+    <div class="divider"></div>
+    <button class="ghost-btn" onclick="goToCollect()">+ Add / reload students</button>
+  </div>
+
+  <!-- REVEAL -->
+  <div id="screen-reveal" class="screen">
+    <div class="reveal-header">
+      <div>
+        <h2 id="reveal-name"></h2>
+        <p>Which one is the real fun fact?</p>
+      </div>
+      <button class="btn" onclick="goToGame()">Back</button>
+    </div>
+    <div id="facts-container"></div>
+    <div class="loading-wrap" id="reveal-loading">
+      <span class="spinner"></span><span>Generating fake facts...</span>
+    </div>
+    <p id="gen-error" class="error-msg"></p>
+    <div id="reveal-action" style="display:none; margin-top:0.5rem;"></div>
+  </div>
+
+  <!-- DONE -->
+  <div id="screen-done" class="screen">
+    <div class="done-icon">🎉</div>
+    <p class="done-title">That's everyone!</p>
+    <p class="done-sub">Hope you learned something new about each other.</p>
+    <button class="btn btn-primary btn-full" onclick="resetGame()">Play again</button>
+  </div>
+
+</div>
+<script>
+let anthropicKey = '';
+let sheetsKey = '';
+let students = [];
+let currentStudent = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'manual')));
+  document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
+  document.getElementById('tab-sheets').classList.toggle('active', tab === 'sheets');
+}
+
+function saveKeys() {
+  const aKey = document.getElementById('inp-anthropic-key').value.trim();
+  const sKey = document.getElementById('inp-sheets-key').value.trim();
+  const err = document.getElementById('key-error');
+  if (!aKey.startsWith('sk-') || !sKey) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  anthropicKey = aKey;
+  sheetsKey = sKey;
+  show('collect');
+}
+
+function addStudent() {
+  const name = document.getElementById('inp-name').value.trim();
+  const fact = document.getElementById('inp-fact').value.trim();
+  const err = document.getElementById('inp-error');
+  if (!name || !fact) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  if (students.find(s => s.name === name)) {
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-fact').value = '';
+  } else {
+    students.push({ name, fact, fakes: null, shuffled: null, played: false });
+  }
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-fact').value = '';
+  renderChips();
+  document.getElementById('student-list-area').style.display = 'block';
+}
+
+async function loadSheet() {
+  const sheetId = document.getElementById('inp-sheet-id').value.trim();
+  const nameCol = (document.getElementById('inp-name-col').value.trim() || 'B').toUpperCase();
+  const factCol = (document.getElementById('inp-fact-col').value.trim() || 'C').toUpperCase();
+  const errEl = document.getElementById('sheets-error');
+  const loadingEl = document.getElementById('sheets-loading');
+  const previewEl = document.getElementById('sheets-preview');
+
+  errEl.style.display = 'none';
+  previewEl.style.display = 'none';
+  previewEl.innerHTML = '';
+
+  if (!sheetId) { errEl.textContent = 'Please enter a Sheet ID.'; errEl.style.display = 'block'; return; }
+
+  loadingEl.style.display = 'block';
+
+  try {
+    const range = `A2:Z`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?key=${sheetsKey}`;
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      throw new Error(body.error?.message || `Error ${resp.status}`);
+    }
+    const data = await resp.json();
+    const rows = data.values || [];
+
+    const colIndex = col => col.charCodeAt(0) - 65;
+    const nameIdx = colIndex(nameCol);
+    const factIdx = colIndex(factCol);
+
+    const imported = rows
+      .map(row => ({ name: (row[nameIdx] || '').trim(), fact: (row[factIdx] || '').trim() }))
+      .filter(r => r.name && r.fact);
+
+    if (imported.length === 0) {
+      throw new Error('No valid responses found. Check your column letters and make sure the sheet has data.');
+    }
+
+    loadingEl.style.display = 'none';
+
+    previewEl.innerHTML = `
+      <p style="font-size:13px; font-weight:500; margin-bottom:8px; color:var(--text);">${imported.length} response${imported.length > 1 ? 's' : ''} found:</p>
+      <div class="import-preview">
+        ${imported.map(r => `
+          <div class="import-row">
+            <span class="import-name">${r.name}</span>
+            <span class="import-fact">${r.fact}</span>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-full" onclick="confirmImport()" style="margin-top:0.75rem;">Import all ${imported.length} students</button>`;
+    previewEl.style.display = 'block';
+    previewEl._imported = imported;
+
+  } catch(e) {
+    loadingEl.style.display = 'none';
+    errEl.textContent = 'Could not load sheet: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function confirmImport() {
+  const preview = document.getElementById('sheets-preview');
+  const imported = preview._imported || [];
+  students = imported.map(r => ({ name: r.name, fact: r.fact, fakes: null, shuffled: null, played: false }));
+  renderChips();
+  document.getElementById('student-list-area').style.display = 'block';
+  preview.innerHTML = `<p class="info-msg">✓ ${students.length} students imported successfully.</p>`;
+}
+
+function renderChips() {
+  document.getElementById('chips').innerHTML = students.map(s => `<span class="chip">${s.name}</span>`).join('');
+  const btn = document.getElementById('start-btn');
+  btn.disabled = students.length < 2;
+  btn.textContent = students.length < 2 ? 'Need at least 2 students' : 'Start the game';
+}
+
+function goToCollect() {
+  document.getElementById('student-list-area').style.display = students.length ? 'block' : 'none';
+  renderChips();
+  show('collect');
+}
+
+function goToGame() {
+  if (students.length && students.every(s => s.played)) { show('done'); return; }
+  renderStudentButtons();
+  const played = students.filter(s => s.played).length;
+  document.getElementById('progress-fill').style.width = (students.length ? Math.round(played / students.length * 100) : 0) + '%';
+  show('game');
+}
+
+function renderStudentButtons() {
+  document.getElementById('student-buttons').innerHTML = students.map((s, i) => `
+    <button class="student-btn ${s.played ? 'played' : ''}" ${s.played ? '' : `onclick="selectStudent(${i})"`}>
+      <span>${s.name}</span>
+      <span style="font-size:16px; color:var(--text3)">${s.played ? '✓' : '→'}</span>
+    </button>`).join('');
+}
+
+async function selectStudent(i) {
+  currentStudent = i;
+  const s = students[i];
+  document.getElementById('reveal-name').textContent = s.name;
+  document.getElementById('reveal-action').style.display = 'none';
+  document.getElementById('reveal-action').innerHTML = '';
+  document.getElementById('facts-container').innerHTML = '';
+  document.getElementById('gen-error').style.display = 'none';
+  show('reveal');
+  if (s.fakes) { renderFacts(s); return; }
+  document.getElementById('reveal-loading').style.display = 'block';
+  try {
+    s.fakes = await generateFakes(s.name, s.fact);
+    renderFacts(s);
+  } catch(e) {
+    document.getElementById('reveal-loading').style.display = 'none';
+    const el = document.getElementById('gen-error');
+    el.textContent = 'Could not generate facts: ' + (e.message || 'Unknown error.');
+    el.style.display = 'block';
+  }
+}
+
+async function callAnthropicAPI(url, payload) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) {
+    const body = await resp.text();
+    let msg = `API error ${resp.status}`;
+    try { msg = JSON.parse(body).error?.message || msg; } catch(_) {}
+    throw new Error(msg);
+  }
+  return resp.json();
+}
+
+async function generateFakes(name, realFact) {
+  const payload = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 500,
+    messages: [{
+      role: 'user',
+      content: `You are helping run a "two truths and a lie" icebreaker for a group of seven 12th-grade students who have known each other for at least 6 months. Students may write their fun facts in English, Traditional Chinese, Simplified Chinese, or any mix of these languages.
+
+Student name: ${name}
+Their REAL fun fact: "${realFact}"
+
+Generate exactly 2 FAKE fun facts for ${name}. Rules:
+- Write each fake fact in the SAME language and script as the real fun fact above. If the real fact is in Simplified Chinese, write in Simplified Chinese. If it is in Traditional Chinese, write in Traditional Chinese. If it is in English, write in English. If it mixes languages or scripts, mirror that same mix naturally.
+- Plausible but false
+- Funny — designed to make the group laugh
+- Thematically or tonally related to the real fact
+- Fully age-appropriate, racially neutral, and sexually appropriate for a high school classroom
+- Similar length to the real fact (1–2 sentences)
+- Return ONLY a valid JSON array of exactly 2 strings. No labels, no explanation, no markdown fences.
+Example (English): ["Fake fact one here.", "Fake fact two here."]
+Example (Traditional Chinese): ["假趣事一。", "假趣事二。"]
+Example (Simplified Chinese): ["假趣事一。", "假趣事二。"]
+Example (mixed): ["I once 在夜市赢得了比赛。", "我 accidentally joined a flash mob."]`
+    }]
+  };
+
+  const PROXY = 'https://corsproxy.io/?url=' + encodeURIComponent('https://api.anthropic.com/v1/messages');
+  const DIRECT = 'https://api.anthropic.com/v1/messages';
+
+  let data;
+  try {
+    data = await callAnthropicAPI(DIRECT, payload);
+  } catch(e) {
+    if (e.message && e.message.toLowerCase().includes('fetch')) {
+      data = await callAnthropicAPI(PROXY, payload);
+    } else {
+      throw e;
+    }
+  }
+
+  const raw = data.content.find(b => b.type === 'text').text.trim();
+  const clean = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+function renderFacts(s) {
+  document.getElementById('reveal-loading').style.display = 'none';
+  if (!s.shuffled) {
+    s.shuffled = [
+      { text: s.fact, real: true },
+      { text: s.fakes[0], real: false },
+      { text: s.fakes[1], real: false }
+    ].sort(() => Math.random() - 0.5);
+  }
+  document.getElementById('facts-container').innerHTML = s.shuffled.map((f, i) => `
+    <div class="fact-card">
+      <p class="fact-num">Fact ${i + 1}</p>
+      <p class="fact-text">${f.text}</p>
+      <div class="reveal-row" id="rrow-${i}">
+        <span class="badge ${f.real ? 'badge-real' : 'badge-fake'}">${f.real ? 'Real' : 'Fake'}</span>
+        <span>${f.real ? 'This is the real one!' : 'Made up by AI'}</span>
+      </div>
+    </div>`).join('');
+  const el = document.getElementById('reveal-action');
+  el.style.display = 'block';
+  el.innerHTML = '<button class="btn btn-primary btn-full" onclick="revealAnswer()">Reveal the real one</button>';
+}
+
+function revealAnswer() {
+  students[currentStudent].shuffled.forEach((_, i) => {
+    document.getElementById('rrow-' + i).classList.add('show');
+  });
+  document.getElementById('reveal-action').innerHTML = '<button class="btn btn-primary btn-full" onclick="markPlayed()">Next student</button>';
+}
+
+function markPlayed() {
+  students[currentStudent].played = true;
+  goToGame();
+}
+
+function resetGame() {
+  students = [];
+  currentStudent = null;
+  document.getElementById('student-list-area').style.display = 'none';
+  document.getElementById('chips').innerHTML = '';
+  document.getElementById('sheets-preview').style.display = 'none';
+  document.getElementById('sheets-preview').innerHTML = '';
+  show('collect');
+}
+</script>
+</body>
+</html>
